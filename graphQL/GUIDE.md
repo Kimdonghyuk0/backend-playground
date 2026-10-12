@@ -71,7 +71,9 @@ graphQL/
 
 ### 완료 기준
 - `npx prisma studio`에서 데이터 확인
-- 서버 실행 시 콘솔에 SQL 로그가 출력됨
+- 서버가 에러 없이 실행됨 (`PrismaModule dependencies initialized`)
+- **쿼리를 실행했을 때** 콘솔에 `prisma:query SELECT ...` 로그가 출력됨
+  (서버를 켜기만 해서는 SQL이 실행되지 않으므로 로그도 안 나옴. 아래 확인 방법 참고)
 
 ---
 
