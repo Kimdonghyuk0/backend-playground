@@ -8,6 +8,7 @@
     "graphql": "^16.14.2"
   },
   "devDependencies": {
-    "prisma": "^6.19.3"
+    "prisma": "^6.19.3",
+    "tsx": "^4.23.15"
   }
 }
