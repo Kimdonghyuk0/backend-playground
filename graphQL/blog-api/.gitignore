@@ -37,4 +37,6 @@ coverage/
 # TypeScript
 *.tsbuildinfo
 
-/generated/prisma
+# Prisma Client (prisma generate로 생성)
+/src/generated/
+/generated/
