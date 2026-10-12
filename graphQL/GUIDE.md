@@ -91,7 +91,7 @@ graphQL/
   - `post(id: Int!): Post`
 
 ### 완료 기준
-`http://localhost:3000/graphql`(Apollo Sandbox)에서 아래 쿼리가 동작해야 합니다.
+`http://localhost:3000/graphql`(GraphiQL)에서 아래 쿼리가 동작해야 합니다.
 ```graphql
 query {
   users { id name email }
@@ -118,7 +118,7 @@ query {
 - [ ] (선택) `class-validator`와 `ValidationPipe`로 입력값 검증 (예: email 형식, title 길이)
 
 ### 완료 기준
-- Sandbox에서 생성, 수정, 삭제가 모두 동작
+- GraphiQL에서 생성, 수정, 삭제가 모두 동작
 - 잘못된 요청에 대해 `errors` 배열에 의미 있는 메시지가 나옴
 
 ---
