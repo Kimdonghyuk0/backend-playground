@@ -11,10 +11,10 @@ NestJS + GraphQL(Apollo, code-first) + Prisma로 블로그 API를 만들고,
 ## 0. 준비
 
 ### 0-1. 환경 확인
-- [ ] Node **20 이상** (22 LTS 추천). 지금 이 Mac은 `v18.20.8`이라 **업그레이드가 필요**합니다.
+- [x] Node **20 이상** (22 LTS 추천). 지금 이 Mac은 `v18.20.8`이라 **업그레이드가 필요**합니다.
   - 최신 NestJS와 Prisma는 Node 18을 지원하지 않습니다.
   - `nvm install 22 && nvm use 22` 또는 `brew install node@22`
-- [ ] Nest CLI: `npm i -g @nestjs/cli` (또는 매번 `npx @nestjs/cli`)
+- [x] Nest CLI: `npm i -g @nestjs/cli` (또는 매번 `npx @nestjs/cli`)
 
 ### 0-2. 프로젝트 생성
 `practice` 루트가 이미 git 저장소이므로 **`--skip-git`을 꼭 붙이세요**.
@@ -59,15 +59,15 @@ graphQL/
 ## Step 1. Prisma 스키마와 시드 데이터
 
 ### 과제
-- [ ] `schema.prisma`에 모델 3개 정의
+- [x] `schema.prisma`에 모델 3개 정의
   - `User` : id, email(unique), name, createdAt
   - `Post` : id, title, content, published(Boolean), authorId → User, createdAt
   - `Comment` : id, content, postId → Post, authorId → User, createdAt
-- [ ] `npx prisma migrate dev --name init` 실행
-- [ ] `prisma/seed.ts` 작성: **User 10명, 사람마다 Post 5개, Post마다 Comment 3개**
+- [x] `npx prisma migrate dev --name init` 실행
+- [x] `prisma/seed.ts` 작성: **User 10명, 사람마다 Post 5개, Post마다 Comment 3개**
   - 데이터가 충분히 있어야 N+1이 눈에 띕니다 (Post 50개, Comment 150개).
-- [ ] `PrismaService`(`PrismaClient` 상속 + `onModuleInit`에서 `$connect`)와 `PrismaModule`(`@Global`) 작성
-- [ ] **쿼리 로그 켜기**: `new PrismaClient({ log: ['query'] })` 처럼 실행되는 SQL이 콘솔에 찍히게 설정
+- [x] `PrismaService`(`PrismaClient` 상속 + `onModuleInit`에서 `$connect`)와 `PrismaModule`(`@Global`) 작성
+- [x] **쿼리 로그 켜기**: `new PrismaClient({ log: ['query'] })` 처럼 실행되는 SQL이 콘솔에 찍히게 설정
 
 ### 완료 기준
 - `npx prisma studio`에서 데이터 확인
@@ -80,11 +80,11 @@ graphQL/
 ## Step 2. GraphQL 기본 세팅 + 단순 Query
 
 ### 과제
-- [ ] `app.module.ts`에 `GraphQLModule.forRoot<ApolloDriverConfig>()` 등록
+- [x] `app.module.ts`에 `GraphQLModule.forRoot<ApolloDriverConfig>()` 등록
   - `driver: ApolloDriver`, `autoSchemaFile: true` (code-first)
-- [ ] `@ObjectType()`로 `User`, `Post`, `Comment` 모델 클래스 작성
+- [x] `@ObjectType()`로 `User`, `Post`, `Comment` 모델 클래스 작성
   - 이 단계에서는 **관계 필드(author, posts, comments)는 아직 넣지 않습니다**
-- [ ] Query 구현
+- [x] Query 구현
   - `users: [User!]!`
   - `user(id: Int!): User` (없으면 `null`)
   - `posts: [Post!]!`
@@ -108,14 +108,14 @@ query {
 ## Step 3. Mutation + Input 타입
 
 ### 과제
-- [ ] `@InputType()`으로 DTO 작성: `CreateUserInput`, `CreatePostInput`, `UpdatePostInput`
-- [ ] Mutation 구현
+- [x] `@InputType()`으로 DTO 작성: `CreateUserInput`, `CreatePostInput`, `UpdatePostInput`
+- [x] Mutation 구현
   - `createUser(input: CreateUserInput!): User!`
   - `createPost(input: CreatePostInput!): Post!`
   - `updatePost(id: Int!, input: UpdatePostInput!): Post!`
   - `deletePost(id: Int!): Boolean!`
-- [ ] 존재하지 않는 id를 수정하거나 삭제하면 GraphQL 에러를 반환
-- [ ] (선택) `class-validator`와 `ValidationPipe`로 입력값 검증 (예: email 형식, title 길이)
+- [x] 존재하지 않는 id를 수정하거나 삭제하면 GraphQL 에러를 반환
+- [x] (선택) `class-validator`와 `ValidationPipe`로 입력값 검증 (예: email 형식, title 길이)
 
 ### 완료 기준
 - GraphiQL에서 생성, 수정, 삭제가 모두 동작
@@ -126,7 +126,7 @@ query {
 ## Step 4. 관계 필드와 N+1 문제 재현 ⚠️ 핵심
 
 ### 과제
-- [ ] GraphQL 스키마에 관계 필드 추가
+- [x] GraphQL 스키마에 관계 필드 추가
   - `Post.author: User!`
   - `Post.comments: [Comment!]!`
   - `User.posts: [Post!]!`
@@ -135,8 +135,8 @@ query {
   > 이 프로젝트는 ESM이라 `Post ↔ User` 모델이 서로 import하면
   > `ReferenceError: Cannot access 'User' before initialization` 에러가 납니다.
   > **resolver의 `@ResolveField(() => User)`만으로** 스키마에 필드가 추가됩니다.
-- [ ] `Comment` 모델과 `CommentResolver`, `CommentModule` 만들기 (`Comment.author`용)
-- [ ] `@ResolveField()` + `@Parent()`로 **각 필드를 단순하게** 구현
+- [x] `Comment` 모델과 `CommentResolver`, `CommentModule` 만들기 (`Comment.author`용)
+- [x] `@ResolveField()` + `@Parent()`로 **각 필드를 단순하게** 구현
   ```ts
   @ResolveField(() => User)
   author(@Parent() post: Post) {
@@ -147,7 +147,7 @@ query {
   > Prisma는 같은 틱에 호출된 `findUnique`를 내부에서 자동으로 묶어 실행합니다.
   > 그래서 `findUnique`로는 N+1이 잘 드러나지 않습니다. 이 내용은 Step 7에서 확인합니다.
 
-- [ ] 아래 쿼리를 실행하고 **콘솔에 찍힌 SQL 개수를 세서 기록**하세요
+- [x] 아래 쿼리를 실행하고 **콘솔에 찍힌 SQL 개수를 세서 기록**하세요
   ```graphql
   query {
     posts {
@@ -164,9 +164,11 @@ query {
 ### 기록표 (직접 채우기)
 | 쿼리 | 예상 SQL 수 | 실제 SQL 수 |
 |---|---|---|
-| `posts { title }` | 1 | |
-| `posts { author { name } }` | 1 + 50 | |
-| `posts { comments { author { name } } }` | | |
+| `posts { title }` | 1 | 1 |
+| `posts { author { name } }` | 1 + 50 | 51 |
+| `posts { comments { author { name } } }` | 1 + 50 + 150 | 201 |
+| `users { posts }` | 1 + 10 | 11 |
+| `posts { author, comments { author } }` | 1 + 50 + 50 + 150 | 251 |
 
 ### 완료 기준
 - 왜 SQL이 `1 + N + N×M`개 실행되는지 **본인 말로 설명**할 수 있어야 합니다.
@@ -180,13 +182,13 @@ query {
 ## Step 5. DataLoader로 N+1 해결 🎯 메인 목표
 
 ### 5-1. 개념 정리 (코드 작성 전에 먼저 답해보기)
-- [ ] DataLoader의 **batching**이란? (같은 틱에 들어온 `load(key)` 호출을 모아서 한 번에 처리)
-- [ ] DataLoader의 **caching**이란? (같은 요청 안에서 같은 key를 다시 조회하지 않음)
-- [ ] 왜 DataLoader는 **요청(request)마다 새로 만들어야** 할까요?
+- [x] DataLoader의 **batching**이란? (같은 틱에 들어온 `load(key)` 호출을 모아서 한 번에 처리)
+- [x] DataLoader의 **caching**이란? (같은 요청 안에서 같은 key를 다시 조회하지 않음)
+- [x] 왜 DataLoader는 **요청(request)마다 새로 만들어야** 할까요?
   (전역 싱글톤으로 만들면 어떤 문제가 생길까요? 다른 사용자 데이터 노출, 오래된 캐시)
 
 ### 5-2. 구현 과제
-- [ ] `src/loader/` 폴더에 로더 생성 함수 작성
+- [x] `src/loader/` 폴더에 로더 생성 함수 작성
   ```ts
   // loaders.ts
   export function createLoaders(prisma: PrismaService) {
@@ -197,11 +199,11 @@ query {
     };
   }
   ```
-- [ ] **batch 함수 규칙**을 지키기
+- [x] **batch 함수 규칙**을 지키기
   1. `findMany({ where: { id: { in: ids } } })`로 **쿼리 1번**에 조회
   2. 반환 배열의 **길이와 순서가 입력 keys와 정확히 같아야** 함 (`Map`으로 정렬)
   3. 없는 key는 `null`(1:1) 또는 `[]`(1:N)로 채우기
-- [ ] **요청마다 로더 생성**: `GraphQLModule`의 `context`에서 생성
+- [x] **요청마다 로더 생성**: `GraphQLModule`의 `context`에서 생성
   ```ts
   GraphQLModule.forRootAsync<ApolloDriverConfig>({
     driver: ApolloDriver,
@@ -213,7 +215,7 @@ query {
     }),
   })
   ```
-- [ ] Step 4의 `@ResolveField`를 로더 호출로 교체
+- [x] Step 4의 `@ResolveField`를 로더 호출로 교체
   ```ts
   @ResolveField(() => User)
   author(@Parent() post: Post, @Context('loaders') loaders: Loaders) {
@@ -222,14 +224,20 @@ query {
   ```
 
 ### 완료 기준
-- [ ] Step 4와 **같은 쿼리**를 다시 실행하고 기록표 채우기
+- [x] Step 4와 **같은 쿼리**를 다시 실행하고 기록표 채우기
 
-| 쿼리 | DataLoader 전 | DataLoader 후 |
-|---|---|---|
-| `posts { author { name } }` | | (목표: 2) |
-| `posts { comments { author { name } } }` | | (목표: 4 이하) |
+| GraphQL Query | N+1 발생 전 | DataLoader 적용 후 |
+| --- | --- | --- |
+| `posts { title }` | 1 | 1 |
+| `posts { author }` | 51 | 2 |
+| `posts { comments { author } }` | 201 | 3 |
+| `users { posts }` | 11 | 2 |
+| `posts { author, comments { author } }` | 251 | 3 |
 
-- [ ] 콘솔 SQL에서 `WHERE id IN (...)` 형태가 나오는지 확인
+> 마지막 줄이 4가 아니라 3인 이유: 글 작성자를 조회할 때 유저 10명이 모두 `userById`에 캐시됨
+> → 댓글 작성자는 같은 로더의 캐시에서 꺼내서 SQL이 나가지 않음 (Post.author와 Comment.author가 로더 공유)
+
+- [x] 콘솔 SQL에서 `WHERE id IN (...)` 형태가 나오는지 확인
 
 ---
 

@@ -1,6 +1,5 @@
 import {
   Args,
-  Context,
   Int,
   Mutation,
   Parent,
@@ -8,7 +7,7 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
-import type { Loaders } from '../loader/loaders.js';
+import { Loaders } from '../loader/loaders.decorator.js'; 
 import { PrismaService } from '../prisma/prisma.service.js';
 import { User } from '../user/user.model.js';
 import { Comment } from '../comment/comment.model.js';
@@ -75,8 +74,7 @@ export class PostResolver {
 @ResolveField(() => User)
 author(
   @Parent() post: Post,
-  @Context('loaders') loaders: Loaders,
-  // ↑ @Context('loaders'): app.module에서 만든 context 객체의 loaders 속성을 꺼낸다.
+  @Loaders() loaders: Loaders,
 ) {
   return loaders.userById.load(post.authorId);
   // ↑ 전: this.prisma.user.findFirst({ where: { id: post.authorId } })  → 즉시 SQL
@@ -86,7 +84,7 @@ author(
 }
 
   @ResolveField(() => [Comment])
-  comments(@Parent() post: Post, @Context('loaders') loaders: Loaders) {
+  comments(@Parent() post: Post, @Loaders() loaders: Loaders) {
     // 글 id를 등록 → 같은 틱의 글들을 모아 postId IN (...) 1번으로 조회
     return loaders.commentsByPostId.load(post.id);
   }

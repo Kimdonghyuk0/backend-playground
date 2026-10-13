@@ -1,5 +1,5 @@
-import { Context, Parent, ResolveField, Resolver } from '@nestjs/graphql';
-import type { Loaders } from '../loader/loaders.js';
+import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
+import { Loaders } from '../loader/loaders.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { User } from '../user/user.model.js';
 import { Comment } from './comment.model.js';
@@ -14,7 +14,7 @@ export class CommentResolver {
 
   @ResolveField(() => User)
   // ↑ Comment 타입에 "author: User!" 필드 추가
-  author(@Parent() comment: Comment, @Context('loaders') loaders: Loaders) {
+  author(@Parent() comment: Comment, @Loaders() loaders: Loaders) {
     // 작성자 id를 등록 → Post.author와 같은 userById 로더를 공유해서 캐시도 같이 씀
     return loaders.userById.load(comment.authorId);
   }
