@@ -10,19 +10,44 @@
 //    └── PostModule ...
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'; //GraphQL용 Apollo 드라이버
 import { Module } from '@nestjs/common';
+import { GraphQLModule } from '@nestjs/graphql';
+import { UserModule } from './user/user.module.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 // ↑ 새로 만든 PrismaModule import (역시 .js 확장자)
+import { join } from 'node:path'; // Node.js 내장 모듈. 경로를 OS별로 안전하게 합쳐주는 join() 함수
 
 @Module({
-  imports: [PrismaModule],
-  // ↑ 여기에 넣는 순간 PrismaModule이 앱에 등록됨.
-  //   @Global() 모듈이므로 이후 만드는 모든 모듈에서 PrismaService를 바로 주입 가능.
+  imports: [
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      // GraphQL 서버 엔진
+      driver: ApolloDriver,
+
+
+      // Resolver / ObjectType 등을 읽어서 schema.gql 자동 생성
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+
+      // 생성되는 schema.gql을 알파벳순으로 정렬
+      sortSchema: true,
+    }),
+
+    // PrismaService를 제공하는 모듈
+    PrismaModule,
+
+    // UserResolver / UserService 등이 들어있는 모듈
+    UserModule,
+
+    // PostResolver / PostService 등이 들어있는 모듈
+    //PostModule,
+  ],
+
+  // REST Controller
   controllers: [AppController],
-  // ↑ nest new가 만들어 준 예제 컨트롤러 (GET / → "Hello World!")
-  //   GraphQL만 쓸 거라 나중에 지워도 됨.
+
+  // AppModule 자체에서 사용하는 Provider
   providers: [AppService],
 })
 export class AppModule {}

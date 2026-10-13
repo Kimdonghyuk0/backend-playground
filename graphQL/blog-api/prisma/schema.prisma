@@ -6,7 +6,6 @@ generator client {
   output              = "../src/generated/prisma"
   importFileExtension = "js"
 }
-
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
