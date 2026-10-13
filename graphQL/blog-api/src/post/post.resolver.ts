@@ -1,5 +1,6 @@
 import {
   Args,
+  Context,
   Int,
   Mutation,
   Parent,
@@ -7,6 +8,7 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import type { Loaders } from '../loader/loaders.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { User } from '../user/user.model.js';
 import { Comment } from '../comment/comment.model.js';
@@ -70,10 +72,18 @@ export class PostResolver {
     return this.postService.remove(id);
   }
 
-  @ResolveField(() => User)
-  author(@Parent() post: Post) {
-    return this.prisma.user.findFirst({ where: { id: post.authorId } });
-  }
+@ResolveField(() => User)
+author(
+  @Parent() post: Post,
+  @Context('loaders') loaders: Loaders,
+  // ↑ @Context('loaders'): app.module에서 만든 context 객체의 loaders 속성을 꺼낸다.
+) {
+  return loaders.userById.load(post.authorId);
+  // ↑ 전: this.prisma.user.findFirst({ where: { id: post.authorId } })  → 즉시 SQL
+  //   후: load()는 SQL을 바로 실행하지 않고 key(authorId)를 "등록"만 한다.
+  //       같은 틱의 load()들이 다 모이면 batch 함수가 한 번에 처리하고,
+  //       각 load()가 반환한 Promise가 자기 결과로 resolve된다.
+}
 
   @ResolveField(() => [Comment])
   comments(@Parent() post: Post) { 
