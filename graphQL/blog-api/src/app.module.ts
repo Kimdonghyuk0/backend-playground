@@ -14,6 +14,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'; //GraphQL용 
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { UserModule } from './user/user.module.js';
+import { PostModule } from './post/post.module.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -41,7 +42,7 @@ import { join } from 'node:path'; // Node.js 내장 모듈. 경로를 OS별로 �
     UserModule,
 
     // PostResolver / PostService 등이 들어있는 모듈
-    //PostModule,
+    PostModule,
   ],
 
   // REST Controller
