@@ -10,9 +10,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 
-import { Args, Int, Query, Resolver } from '@nestjs/graphql';
+import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { User } from './user.model.js';
 import { UserService } from './user.service.js';
+import { CreateUserInput } from './dto/create-user.input.js';
 
 @Resolver(() => User)
 // ↑ "이 resolver는 User 타입을 담당한다"는 표시.
@@ -42,5 +43,10 @@ export class UserResolver {
     //   인자는 기본이 필수(!). 선택 인자는 { n
   ) {
     return this.userService.findOne(id);
+  }
+
+  @Mutation(() => User)
+  createUser(@Args('input') input: CreateUserInput) {
+    return this.userService.create(input);
   }
 }
