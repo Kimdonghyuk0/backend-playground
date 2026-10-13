@@ -12,6 +12,7 @@
 
 import {
   Args,
+  Context,
   Int,
   Mutation,
   Parent,
@@ -21,6 +22,7 @@ import {
 } from '@nestjs/graphql';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Post } from '../post/post.model.js';
+import type { Loaders } from '../loader/loaders.js';
 import { User } from './user.model.js';
 import { UserService } from './user.service.js';
 import { CreateUserInput } from './dto/create-user.input.js';
@@ -64,7 +66,8 @@ export class UserResolver {
   }
 
   @ResolveField(() => [Post])
-  posts(@Parent() user: User) {
-    return this.prisma.post.findMany({ where: { authorId: user.id } });
+  posts(@Parent() user: User, @Context('loaders') loaders: Loaders) {
+    // 유저 id를 등록 → 같은 틱의 유저들을 모아 authorId IN (...) 1번으로 조회
+    return loaders.postsByAuthorId.load(user.id);
   }
 }

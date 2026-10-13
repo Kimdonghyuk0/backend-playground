@@ -86,7 +86,8 @@ author(
 }
 
   @ResolveField(() => [Comment])
-  comments(@Parent() post: Post) { 
-    return this.prisma.comment.findMany({ where: { postId: post.id } });
+  comments(@Parent() post: Post, @Context('loaders') loaders: Loaders) {
+    // 글 id를 등록 → 같은 틱의 글들을 모아 postId IN (...) 1번으로 조회
+    return loaders.commentsByPostId.load(post.id);
   }
 }
