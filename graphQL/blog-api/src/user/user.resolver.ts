@@ -10,7 +10,17 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 
-import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Int,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { Post } from '../post/post.model.js';
 import { User } from './user.model.js';
 import { UserService } from './user.service.js';
 import { CreateUserInput } from './dto/create-user.input.js';
@@ -20,7 +30,10 @@ import { CreateUserInput } from './dto/create-user.input.js';
 //   지금은 없어도 동작하지만, Step 4에서 @ResolveField(User의 posts 필드 등)를 쓸 때
 //   "어느 타입의 필드인지" 알아야 해서 필요해진다. 미리 붙여두는 게 관례.
 export class UserResolver {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Query(() => [User])
   // ↑ GraphQL 반환 타입: [User!]!
@@ -48,5 +61,10 @@ export class UserResolver {
   @Mutation(() => User)
   createUser(@Args('input') input: CreateUserInput) {
     return this.userService.create(input);
+  }
+
+  @ResolveField(() => [Post])
+  posts(@Parent() user: User) {
+    return this.prisma.post.findMany({ where: { authorId: user.id } });
   }
 }

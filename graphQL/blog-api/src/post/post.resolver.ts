@@ -1,4 +1,15 @@
-import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Int,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { User } from '../user/user.model.js';
+import { Comment } from '../comment/comment.model.js';
 import { Post } from './post.model.js';
 import { PostService } from './post.service.js';
 import { UpdatePostInput } from './dto/update-post.input.js';
@@ -7,7 +18,10 @@ import { CreatePostInput } from './dto/create-post.input.js';
 @Resolver(() => Post)
 
 export class PostResolver {
-  constructor(private readonly postService: PostService) {}
+  constructor(
+    private readonly postService: PostService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Query(() => [Post])
   posts() {
@@ -56,4 +70,13 @@ export class PostResolver {
     return this.postService.remove(id);
   }
 
+  @ResolveField(() => User)
+  author(@Parent() post: Post) {
+    return this.prisma.user.findFirst({ where: { id: post.authorId } });
+  }
+
+  @ResolveField(() => [Comment])
+  comments(@Parent() post: Post) { 
+    return this.prisma.comment.findMany({ where: { postId: post.id } });
+  }
 }

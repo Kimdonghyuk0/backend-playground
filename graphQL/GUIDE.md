@@ -126,11 +126,16 @@ query {
 ## Step 4. 관계 필드와 N+1 문제 재현 ⚠️ 핵심
 
 ### 과제
-- [ ] 모델에 관계 필드 추가
+- [ ] GraphQL 스키마에 관계 필드 추가
   - `Post.author: User!`
   - `Post.comments: [Comment!]!`
   - `User.posts: [Post!]!`
   - `Comment.author: User!`
+  > ⚠️ 관계 필드를 **model 클래스(`post.model.ts`)에 속성으로 넣지 마세요.**
+  > 이 프로젝트는 ESM이라 `Post ↔ User` 모델이 서로 import하면
+  > `ReferenceError: Cannot access 'User' before initialization` 에러가 납니다.
+  > **resolver의 `@ResolveField(() => User)`만으로** 스키마에 필드가 추가됩니다.
+- [ ] `Comment` 모델과 `CommentResolver`, `CommentModule` 만들기 (`Comment.author`용)
 - [ ] `@ResolveField()` + `@Parent()`로 **각 필드를 단순하게** 구현
   ```ts
   @ResolveField(() => User)

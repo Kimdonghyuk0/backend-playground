@@ -14,7 +14,7 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 //   OnModuleInit  : 모듈 초기화가 끝났을 때 onModuleInit()을 호출해 달라는 인터페이스
 //   OnModuleDestroy: 앱이 종료될 때 onModuleDestroy()를 호출해 달라는 인터페이스
 
-import { PrismaClient } from '../generated/prisma/client.js';
+import { Prisma, PrismaClient } from '../generated/prisma/client.js';
 // ↑ `npx prisma generate`가 schema.prisma를 읽어서 자동으로 만든 클라이언트.
 //   - 실제 파일은 src/generated/prisma/client.ts 인데 import는 `.js`로 적는다.
 //     이유: 이 프로젝트는 ESM(package.json의 "type": "module") + tsconfig "module": "nodenext" 설정이라,
@@ -23,11 +23,23 @@ import { PrismaClient } from '../generated/prisma/client.js';
 //   - schema.prisma를 바꾸면 반드시 `npx prisma generate`를 다시 해야
 //     여기 타입(prisma.user, prisma.post 등)이 갱신된다.
 
+const prismaOptions = {
+  log: [
+    { emit: 'stdout', level: 'query' },
+    // ↑ 기존 log: ['query']와 같음. 실행되는 SQL을 콘솔에 출력.
+    { emit: 'event', level: 'query' },
+    // ↑ SQL이 실행될 때마다 'query' 이벤트도 발생시킴 → 아래 $on으로 받아서 개수를 센다.
+  ],
+} satisfies Prisma.PrismaClientOptions;
+// ↑ 옵션을 상수로 뺀 이유: 아래 PrismaClient<typeof prismaOptions>에 타입으로도 넘겨야
+//   this.$on('query', ...)가 타입 에러 없이 동작한다. (event로 켠 로그만 $on 가능)
+//   satisfies: 이 객체가 PrismaClientOptions 모양이 맞는지 검사하면서, 리터럴 타입은 그대로 유지.
+
 @Injectable()
 // ↑ 이 데코레이터가 있어야 Nest가 이 클래스를 provider로 인식하고,
 //   생성자 파라미터 등을 분석해서 인스턴스를 만들어 줌.
 export class PrismaService
-  extends PrismaClient
+  extends PrismaClient<typeof prismaOptions>
   // ↑ PrismaClient를 "상속"한다.
   //   → PrismaService 자체가 곧 PrismaClient가 됨.
   //   → 그래서 주입받은 쪽에서 this.prisma.user.findMany() 처럼 바로 쓸 수 있음.
@@ -37,21 +49,22 @@ export class PrismaService
   //   사실 Nest는 메서드 이름(onModuleInit)만 있으면 호출해 주지만,
   //   implements를 쓰면 오타(onModuleInt 같은)를 컴파일 단계에서 잡아준다.
 {
+  queryCount = 0;
+  // ↑ 서버가 켜진 뒤 실행된 SQL의 누적 개수. SqlCountPlugin이 요청 전후 값을 비교해서
+  //   "이번 GraphQL 요청에서 SQL이 몇 개 나갔는지" 계산한다.
+
   constructor() {
-    super({
-      // ↑ super(...) = 부모 클래스(PrismaClient)의 생성자 호출.
-      //   PrismaClient를 만들 때 넘기는 옵션을 여기에 적는다.
-      log: ['query'],
-      // ↑ 실행되는 모든 SQL을 콘솔에 출력하는 옵션. ⭐ 이번 실습의 핵심 도구.
-      //   콘솔에 이런 식으로 찍힘:
-      //     prisma:query SELECT `main`.`User`.`id`, ... FROM `main`.`User` WHERE 1=1
-      //   → 나중에 Step 4(N+1 재현)에서 이 로그 줄 수를 세서
-      //     "쿼리가 몇 번 나갔는지"를 눈으로 확인한다.
-      //
-      //   다른 레벨도 같이 켤 수 있음:
-      //     log: ['query', 'info', 'warn', 'error']
-      //   실제 서비스에서는 로그가 너무 많아지니 'query'는 보통 개발 환경에서만 켠다.
+    super(prismaOptions);
+    // ↑ super(...) = 부모 클래스(PrismaClient)의 생성자 호출.
+    //   PrismaClient를 만들 때 넘기는 옵션을 여기에 적는다.
+    //   콘솔에 이런 식으로 찍힘:
+    //     prisma:query SELECT `main`.`User`.`id`, ... FROM `main`.`User` WHERE 1=1
+    //   실제 서비스에서는 로그가 너무 많아지니 'query'는 보통 개발 환경에서만 켠다.
+
+    this.$on('query', () => {
+      this.queryCount++;
     });
+    // ↑ SQL이 실행될 때마다 호출되는 이벤트 리스너. 카운터만 1 올린다.
   }
 
   async onModuleInit() {

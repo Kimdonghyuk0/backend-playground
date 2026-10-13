@@ -15,6 +15,8 @@ import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { UserModule } from './user/user.module.js';
 import { PostModule } from './post/post.module.js';
+import { CommentModule } from './comment/comment.module.js';
+import { SqlCountPlugin } from './common/sql-count.plugin.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -43,12 +45,15 @@ import { join } from 'node:path'; // Node.js 내장 모듈. 경로를 OS별로 �
 
     // PostResolver / PostService 등이 들어있는 모듈
     PostModule,
+
+    CommentModule,
   ],
 
   // REST Controller
   controllers: [AppController],
 
   // AppModule 자체에서 사용하는 Provider
-  providers: [AppService],
+  providers: [AppService, SqlCountPlugin],
+  // ↑ SqlCountPlugin: GraphQL 요청마다 실행된 SQL 개수를 콘솔에 출력 (N+1 측정용)
 })
 export class AppModule {}

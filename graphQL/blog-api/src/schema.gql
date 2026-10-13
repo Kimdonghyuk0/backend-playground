@@ -2,6 +2,15 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Comment {
+  author: User!
+  authorId: Int!
+  content: String!
+  createdAt: DateTime!
+  id: Int!
+  postId: Int!
+}
+
 input CreatePostInput {
   authorId: Int!
   content: String!
@@ -27,7 +36,9 @@ type Mutation {
 }
 
 type Post {
+  author: User!
   authorId: Int!
+  comments: [Comment!]!
   content: String!
   createdAt: DateTime!
   id: Int!
@@ -54,4 +65,5 @@ type User {
   email: String!
   id: Int!
   name: String!
+  posts: [Post!]!
 }
