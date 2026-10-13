@@ -2,10 +2,23 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input CreatePostInput {
+  authorId: Int!
+  content: String!
+  published: Boolean
+  title: String!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type Mutation {
+  createPost(input: CreatePostInput!): Post!
+  deletePost(id: Int!): Boolean!
+  updatePost(id: Int!, input: UpdatePostInput!): Post!
+}
 
 type Post {
   authorId: Int!
@@ -22,6 +35,12 @@ type Query {
   postsByUserId(userId: Int!): [Post!]!
   user(id: Int!): User
   users: [User!]!
+}
+
+input UpdatePostInput {
+  content: String
+  published: Boolean
+  title: String
 }
 
 type User {
