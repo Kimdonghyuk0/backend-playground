@@ -6,16 +6,18 @@
 // ⚠️ Prisma의 User 타입과는 다른 것!
 //   - Prisma User   : DB 테이블 모양 (schema.prisma → 자동 생성)
 //   - GraphQL User  : API로 "공개할" 모양 (여기서 직접 정의)
-//   @Field()를 붙인 것만 API에 노출된다. (예: password는 DB엔 있어도 여기엔 안 넣음)
+//   대부분 같지만, 예를 들어 password 같은 필드는 DB엔 있어도 GraphQL엔 안 넣는다.
+//   → @Field()를 붙인 것만 API에 노출됨.
 //
 // 이 클래스는 아래 GraphQL 타입으로 변환된다 (src/schema.gql에서 확인 가능):
-//   type User {
+//   type User { !-> not null
 //     id: Int!
 //     email: String!
 //     name: String!
 //     createdAt: DateTime!
 //   }
 // ─────────────────────────────────────────────────────────────────────────────
+
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()
@@ -23,25 +25,27 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 //   클래스 이름(User)이 그대로 GraphQL 타입 이름이 된다.
 export class User {
   @Field(() => Int)
-  // ↑ TS의 number는 GraphQL에서 Int인지 Float인지 구분이 안 됨.
-  //   안 적으면 기본값 Float이 되므로, 정수인 id는 Int로 명시.
+  // ↑ GraphQL 필드로 노출. `() => Int`는 GraphQL 타입을 명시하는 부분.
+  //   왜 명시해야 하나?
+  //   → TypeScript의 number는 GraphQL에서 Int(정수)인지 Float(실수)인지 구분이 안 됨.
+  //     안 적으면 기본값 Float이 된다. id는 정수니까 Int로 명시.
+  //   ID 타입 vs Int 타입?
+  //   → GraphQL의 ID는 "문자열로 직렬화되는 고유값"(응답에 "1"처럼 따옴표로 나감).
+  //     Prisma id가 Int라서 이번 실습은 Int로 통일하는 게 덜 헷갈림.
   id: number;
 
   @Field()
-  // ↑ string, boolean은 TS 타입만 보고 String, Boolean으로 자동 추론 → 타입 생략 가능.
-  //   (tsconfig의 emitDecoratorMetadata: true 덕분)
+  // ↑ string, boolean은 TS 타입만 보고 String, Boolean으로 자동 추론되므로 생략 가능.
+  //   (tsconfig의 emitDecoratorMetadata: true 덕분에 런타임에 타입 정보를 읽을 수 있음)
   email: string;
 
   @Field()
   name: string;
 
   @Field()
-  // ↑ Date는 자동으로 GraphQL의 DateTime 스칼라가 된다.
+  // ↑ Date 타입은 자동으로 GraphQL의 DateTime 스칼라가 된다.
   //   응답에는 "2026-10-12T07:32:11.970Z" 같은 ISO 문자열로 나간다.
   createdAt: Date;
 
-  // ⚠️ 기본적으로 모든 필드는 non-null(!)이다.
-  //   null이 올 수 있는 필드는 @Field({ nullable: true }) 로 표시해야 함.
 
-  // 💡 posts 같은 관계 필드는 Step 4에서 추가한다.
 }
