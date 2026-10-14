@@ -56,8 +56,10 @@ export class PostService {
     //   💡 대안: schema.prisma에서 relation에 onDelete: Cascade를 주면
     //          글을 지울 때 DB가 댓글도 자동으로 지워준다.
 
-    await this.prisma.post.delete({ where: { id } });
-    return true;
+    return this.prisma.post.delete({ where: { id } });
+    // ↑ 전: delete 후 true 반환 → 후: 삭제된 글을 반환.
+    //   resolver가 deleted.authorId로 DataLoader 캐시를 지워야 해서 필요하다.
+    //   (Prisma delete는 삭제된 레코드를 돌려준다. GraphQL 응답은 resolver에서 true로 바꿔 반환)
     // ↑ Mutation 반환 타입이 Boolean이라 true
 
   }

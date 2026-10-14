@@ -47,28 +47,74 @@ export class PostResolver {
   @Mutation(() => Post)
   // ↑ GraphQL Mutation 필드 등록. 반환 타입은 생성된 Post (Post!)
   //   → 클라이언트는 생성 직후 id, createdAt 같은 서버가 만든 값을 바로 받아볼 수 있다.
-  createPost(
+  async createPost(
+    // ↑ async 추가: 글 생성을 "기다린 뒤" 캐시를 지워야 해서 await가 필요하다.
     @Args('input') input: CreatePostInput,
     // ↑ GraphQL 인자 이름 "input". 타입은 TS 클래스(CreatePostInput)를 보고 자동 추론.
     //   (클래스 타입은 런타임에도 남아있어서 () => CreatePostInput 생략 가능.
     //    number와 달리 Int/Float 모호함도 없음)
+    @Loaders() loaders: Loaders,
+    // ↑ 6-1에서 만든 데코레이터. 이 요청의 context에 있는 로더를 받는다.
   ) {
-    return this.postService.create(input);
+    // 전: return this.postService.create(input);
+    //   → 글은 DB에 생기지만, postsByAuthorId 캐시에는 "글 생성 전 목록"이 남아 있다.
+    //   → 같은 요청 안에서 author { posts }를 다시 조회하면 새 글이 빠진 목록이 나온다.
+    const post = await this.postService.create(input);
+    loaders.postsByAuthorId.clear(input.authorId);
+    // ↑ 이 작성자의 "글 목록" 캐시가 이제 틀린 값이 됐으니 지운다.
+    // ↑ clear(key): 이 key의 캐시만 지운다. (다른 작성자의 캐시는 그대로)
+    //   다음 load(authorId) 호출은 캐시가 없으니 DB를 다시 조회 → 새 글이 포함된 목록.
+    //   ⚠️ 반드시 create "후"에 지워야 한다.
+    //      먼저 지우면, 생성이 끝나기 전에 다른 필드가 load()해서 옛 목록이 다시 캐시될 수 있다.
+
+    return post;
   }
 
   @Mutation(() => Post)
-  updatePost(
+  async updatePost(
     @Args('id', { type: () => Int }) id: number,
     @Args('input') input: UpdatePostInput,
     // ↑ 인자 2개 → updatePost(id: Int!, input: UpdatePostInput!)
+    @Loaders() loaders: Loaders,
   ) {
-    return this.postService.update(id, input);
+    // 전: return this.postService.update(id, input);
+    //   → postsByAuthorId 캐시에는 글 객체 자체(title, content, published)가 들어 있다.
+    //   → 글을 수정해도 캐시 안의 글 객체는 "수정 전 내용"으로 남는다.
+    //   → 같은 요청 안에서 author { posts { title } }를 다시 조회하면 옛 제목이 나온다.
+    const updated = await this.postService.update(id, input);
+
+    loaders.postsByAuthorId.clear(updated.authorId);
+    // ↑ 수정된 글이 들어 있는 "작성자의 글 목록" 캐시를 지운다.
+    //   authorId는 input이 아니라 update 결과(updated)에서 꺼낸다.
+    //   (UpdatePostInput은 OmitType으로 authorId를 빼서, 작성자는 바뀌지 않음
+    //    → 이전/새 작성자 2개를 지울 필요 없이 현재 작성자 1개만 지우면 된다.)
+    //   prime()을 안 쓰는 이유: 우리가 가진 건 "글 1개"뿐이고, 캐시 값은 "글 목록 전체"라서
+    //   정답 값을 모른다 → 지우고, 필요하면 DB에서 다시 조회하게 둔다.
+
+    return updated;
   }
 
   @Mutation(() => Boolean)
   // ↑ GraphQL의 Boolean 타입 (JS의 Boolean 생성자를 그대로 넘김)
-  deletePost(@Args('id', { type: () => Int }) id: number) {
-    return this.postService.remove(id);
+  async deletePost(
+    @Args('id', { type: () => Int }) id: number,
+    @Loaders() loaders: Loaders,
+  ) {
+    // 전: return this.postService.remove(id);  (true만 반환)
+    //   → 삭제된 글이 postsByAuthorId 캐시의 목록에 그대로 남는다.
+    //   → remove()가 댓글도 지우는데, commentsByPostId 캐시에는 댓글 목록이 남는다.
+    //   → 그리고 true만 받아서는 "누구의 글이었는지(authorId)"를 알 수 없었다.
+    const deleted = await this.postService.remove(id);
+    // ↑ remove()가 삭제된 글을 반환하도록 바꿨다. → deleted.authorId를 쓸 수 있다.
+
+    loaders.postsByAuthorId.clear(deleted.authorId);
+    // ↑ 작성자의 글 목록에서 이 글이 빠져야 하므로 목록 캐시를 지운다.
+    loaders.commentsByPostId.clear(id);
+    // ↑ 이 글의 댓글도 DB에서 지워졌으니 댓글 목록 캐시도 지운다.
+    //   (userById는 지우지 않는다: 유저 자체는 바뀐 게 없음)
+
+    return true;
+    // ↑ GraphQL 스키마는 그대로 deletePost: Boolean! (클라이언트 입장에선 변화 없음)
   }
 
 @ResolveField(() => User)

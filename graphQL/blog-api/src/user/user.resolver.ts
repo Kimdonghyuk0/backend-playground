@@ -60,8 +60,22 @@ export class UserResolver {
   }
 
   @Mutation(() => User)
-  createUser(@Args('input') input: CreateUserInput) {
-    return this.userService.create(input);
+  async createUser(
+    @Args('input') input: CreateUserInput,
+    @Loaders() loaders: Loaders,
+  ) {
+    // 전: return this.userService.create(input);
+    //   → 같은 요청에서 userById.load(새 유저 id)가 호출되면 SQL이 1번 더 나간다.
+    //     (방금 만든 유저 객체를 이미 손에 들고 있는데도!)
+    const user = await this.userService.create(input);
+    loaders.userById.prime(user.id, user);
+    // ↑ prime(key, value): 캐시에 값을 "미리 넣어" 둔다.
+    //   이후 같은 요청에서 userById.load(user.id) → DB 안 가고 캐시에서 바로 반환.
+    //   clear()가 "틀린 캐시를 지우는 것"이라면, prime()은 "맞는 값을 미리 채우는 것".
+    //   ⚠️ prime()은 key가 이미 캐시에 있으면 덮어쓰지 않는다.
+    //      값을 교체하려면 loaders.userById.clear(id).prime(id, newValue) 처럼 지우고 넣기.
+
+    return user;
   }
 
   @ResolveField(() => [Post])
