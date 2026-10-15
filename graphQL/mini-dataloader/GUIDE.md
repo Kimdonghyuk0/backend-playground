@@ -282,7 +282,8 @@ describe('batching', () => {
   - 그 외에는 resolve된 Promise를 캐시
 
 ### 테스트 케이스 (직접 작성)
-- [ ] 같은 key를 두 번 load → batch 함수의 keys에 1번만 들어감, 두 Promise가 **같은 객체**(`toBe`)
+- [ ] 같은 key를 두 번 load → batch 함수의 keys에 1번만 들어감, 두 결과 **값**이 같음(`toEqual`)
+  - ⚠️ Promise 객체끼리 `toBe`로 비교하지 마세요. 원본 v2.2부터는 캐시 hit도 새 Promise로 감싸서 돌려주기 때문에 `load(1) === load(1)`이 `false`입니다 (내 구현은 `true`)
 - [ ] await 후 같은 key를 다시 load → batch 함수 호출 없음
 - [ ] `clear(1)` 후 load → 다시 batch 함수 호출
 - [ ] `prime(1, 'a')` 후 load(1) → batch 함수 호출 없이 `'a'`
